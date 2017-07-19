@@ -18,6 +18,13 @@ class scraper
 	// Start path, for links that are relative
 	var $startPath;
 	
+	// Connection
+	var $dbc;
+
+    public function __construct($dbc) {
+        $this->dbc = $dbc;
+    }
+
 	// Set start path
 	function setStartPath($path = NULL){
 		if($path != NULL)
@@ -69,14 +76,14 @@ class scraper
 		$insertCount=0;
 		foreach($results[1] as $curEmail)
 		{
-			$insert = mysql_query("INSERT INTO `emaillist` (`emailadd`) VALUES ('$curEmail')");
+			$insert = mysqli_query($this->dbc, "INSERT INTO `emaillist` (`emailadd`) VALUES ('$curEmail')");
 			if($insert){$insertCount++;}
 		}
 		
 		echo 'Emails found: '.number_format($insertCount).PHP_EOL;
 		
 		// Mark the page done
-		$insert = mysql_query("INSERT INTO `finishedurls` (`urlname`) VALUES ('".$this->startURL."')");
+		$insert = mysqli_query( $this->dbc, "INSERT INTO `finishedurls` (`urlname`) VALUES ('".$this->startURL."')");
 		
 		// Get list of new page URLS is emails were found on previous page
 		preg_match_all('/href="([^"]+)"/Umis',$pageContent,$results);
@@ -86,14 +93,14 @@ class scraper
 		// Add the list to the array
 		foreach($currentList as $curURL)
 		{
-			$insert = mysql_query("INSERT INTO `workingurls` (`urlname`) VALUES ('$curURL')");
+			$insert = mysqli_query($this->dbc, "INSERT INTO `workingurls` (`urlname`) VALUES ('$curURL')");
 			if($insert){$insertURLCount++;}
 		}
 		
 		echo 'URLs found: '.number_format($insertURLCount).PHP_EOL;
 
-		$getURL = mysql_fetch_assoc(mysql_query("SELECT `urlname` FROM `workingurls` ORDER BY RAND() LIMIT 1"));
-		$remove = mysql_query("DELETE FROM `workingurls` WHERE `urlname`='$getURL[urlname]' LIMIT 1");
+		$getURL = mysqli_fetch_assoc(mysqli_query($this->dbc, "SELECT `urlname` FROM `workingurls` ORDER BY RAND() LIMIT 1"));
+		$remove = mysqli_query($this->dbc, "DELETE FROM `workingurls` WHERE `urlname`='$getURL[urlname]' LIMIT 1");
 		
 		// Get the new page ready
 		$this->startURL = $getURL['urlname'];
@@ -115,7 +122,8 @@ class scraper
 			// Check if only 1 character - there must exist at least / character
 			if(strlen($url) <= 1){unset($linkList[$sub]);}
 			// Check for any javascript
-			if(eregi('javascript',$url)){unset($linkList[$sub]);}
+			//if(eregi('javascript',$url)){unset($linkList[$sub]);}
+			if(preg_match('/javascript/i',$url)){unset($linkList[$sub]);}
 			// Check for invalid extensions
 			str_replace($this->allowedExtensions,'',$url,$count);
 			if($count > 0){ unset($linkList[$sub]);}
