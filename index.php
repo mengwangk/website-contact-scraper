@@ -1,0 +1,21 @@
+#!/usr/bin/php
+
+<?php
+$DB_USER =  'root';
+$DB_PASSWORD = '';
+$DB_HOST = 'localhost';
+$DB_NAME = 'scrape';
+$dbc = mysql_connect ($DB_HOST, $DB_USER, $DB_PASSWORD) or $error = mysql_error();
+mysql_select_db($DB_NAME) or $error = mysql_error();
+mysql_query("SET NAMES `utf8`") or $error = mysql_error();
+if($error){ die($error);}
+
+include('scraper.class.php');
+
+$new = new scraper;
+// Start Path can be empty, which will be extracted from the start URL
+$new->setStartPath();
+//$new->setStartPath('http://www.dzone.com');
+$new->startURL('http://www.mybizlink.com/index.asp?pageid=29');
+$new->startScraping();
+?>
